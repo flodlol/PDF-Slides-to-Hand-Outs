@@ -31,7 +31,10 @@ export function PreviewCanvas({
   const cacheRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const [isRendering, setIsRendering] = useState(false);
 
-  const effectivePages = selectedPages.length > 0 ? selectedPages : Array.from({ length: pageCount }, (_, i) => i);
+  const effectivePages = useMemo(
+    () => (selectedPages.length > 0 ? selectedPages : Array.from({ length: pageCount }, (_, i) => i)),
+    [selectedPages, pageCount]
+  );
   const effectivePageCount = effectivePages.length;
   const outputPageCount = useMemo(
     () => Math.max(1, Math.ceil(effectivePageCount / settings.pagesPerSheet)),
@@ -128,7 +131,7 @@ export function PreviewCanvas({
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [pdf, layout, settings, pageCount, zoom, outputPageCount]);
+  }, [pdf, layout, settings, pageCount, zoom, outputPageCount, effectivePages, effectivePageCount]);
 
   return (
     <div className="flex flex-col space-y-3 h-full">

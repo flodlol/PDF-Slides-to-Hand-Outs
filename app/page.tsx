@@ -200,7 +200,7 @@ export default function HomePage() {
                     onChange={handleSettingsChange}
                     onReset={handleReset}
                   />
-                  <Accordion type="single" collapsible defaultValue="templates">
+                  <Accordion type="single" collapsible>
                     <AccordionItem value="templates">
                       <AccordionTrigger>Quick templates</AccordionTrigger>
                       <AccordionContent>
@@ -309,12 +309,12 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-8">
-            <Card className="lg:h-[calc(100vh-160px)] shadow-none border-0 bg-transparent relative z-0 overflow-hidden mb-10">
+            <Card className="lg:h-[calc(100vh-160px)] shadow-none border-0 bg-transparent relative z-0 mb-10">
               <CardHeader className="flex items-center justify-between space-y-0">
                 <CardTitle>Live Preview</CardTitle>
                 <span className="text-sm text-muted-foreground">Client-side • Instant</span>
               </CardHeader>
-              <CardContent className="h-full overflow-hidden pb-8">
+              <CardContent className="h-full overflow-auto pb-8">
                 {!pdfDoc ? (
                   <div className="flex h-full min-h-[400px] items-center justify-center text-muted-foreground">
                     Upload a PDF to see the preview.
@@ -335,7 +335,7 @@ export default function HomePage() {
             </Card>
 
             {pdfDoc && (
-              <Card className="shadow-none border border-border/60 bg-card relative z-20 w-full">
+              <Card className="shadow-none border border-border/60 bg-card relative w-full mt-12">
                 <CardHeader>
                   <CardTitle>Slide picker</CardTitle>
                 </CardHeader>
