@@ -67,7 +67,7 @@ export async function generateHandout(
         const fontSize = chooseFontSize(layout.pageWidthPt) - 1;
         page.drawText(slideLabel, {
           x: slot.x + 6,
-          y: layout.pageHeightPt - slot.y - fontSize - 6,
+          y: layout.pageHeightPt - slot.y - slot.height + 8,
           size: fontSize,
           font,
           color: rgb(0.25, 0.27, 0.3),
