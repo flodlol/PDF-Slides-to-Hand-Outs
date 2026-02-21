@@ -19,6 +19,7 @@ import { getCookie, setCookie } from "@/lib/cookies";
 import { SlideStrip } from "@/components/SlideStrip";
 import { useRef } from "react";
 import { CookieBanner } from "@/components/CookieBanner";
+import { Footer } from "@/components/Footer";
 
 interface LoadedPdfMeta {
   name: string;
@@ -362,6 +363,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      <Footer />
       <CookieBanner />
     </main>
   );
