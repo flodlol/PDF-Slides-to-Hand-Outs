@@ -11,6 +11,7 @@ interface PreviewCanvasProps {
   layout: LayoutPlanWithUnits;
   settings: HandoutSettings;
   pageCount: number;
+  selectedPages: number[]; // zero-based indices reflecting selection order
   currentOutputPage: number; // kept for compatibility; not used when scrolling all pages
   onPageChange: (page: number) => void;
   zoom: number;
@@ -21,6 +22,7 @@ export function PreviewCanvas({
   layout,
   settings,
   pageCount,
+  selectedPages,
   currentOutputPage,
   onPageChange,
   zoom,
@@ -29,9 +31,11 @@ export function PreviewCanvas({
   const cacheRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const [isRendering, setIsRendering] = useState(false);
 
+  const effectivePages = selectedPages.length > 0 ? selectedPages : Array.from({ length: pageCount }, (_, i) => i);
+  const effectivePageCount = effectivePages.length;
   const outputPageCount = useMemo(
-    () => Math.max(1, Math.ceil(pageCount / settings.pagesPerSheet)),
-    [pageCount, settings.pagesPerSheet]
+    () => Math.max(1, Math.ceil(effectivePageCount / settings.pagesPerSheet)),
+    [effectivePageCount, settings.pagesPerSheet]
   );
 
   useEffect(() => {
@@ -43,7 +47,7 @@ export function PreviewCanvas({
       const scaledWidth = Math.round(layout.pageWidthPx * zoom);
       const scaledHeight = Math.round(layout.pageHeightPx * zoom);
 
-      const pages = Array.from({ length: outputPageCount }, (_, i) => i);
+        const pages = Array.from({ length: outputPageCount }, (_, i) => i);
 
       for (const outIndex of pages) {
         const canvas = canvasRefs.current[outIndex];
@@ -60,13 +64,13 @@ export function PreviewCanvas({
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, scaledWidth, scaledHeight);
 
-        const startIndex = outIndex * settings.pagesPerSheet;
-        const slots = layout.slotsPx;
+          const startIndex = outIndex * settings.pagesPerSheet;
+          const slots = layout.slotsPx;
 
-        for (let i = 0; i < slots.length; i++) {
-          const srcIndex = startIndex + i;
-          if (srcIndex >= pageCount) break;
-          const pageNumber = srcIndex + 1;
+          for (let i = 0; i < slots.length; i++) {
+            const srcIndex = startIndex + i;
+            if (srcIndex >= effectivePageCount) break;
+            const pageNumber = effectivePages[srcIndex] + 1; // pdf.js is 1-based
 
           const sourceCanvas = await renderPageToCanvas(pageNumber, pdf, cacheRef.current);
           if (cancelled) return;
@@ -105,8 +109,8 @@ export function PreviewCanvas({
           const startIndex = outIndex * settings.pagesPerSheet;
           slots.forEach((slot, i) => {
             const srcIndex = startIndex + i;
-            if (srcIndex >= pageCount) return;
-            const label = `${srcIndex + 1}`;
+            if (srcIndex >= effectivePageCount) return;
+            const label = `${effectivePages[srcIndex] + 1}`;
             const x = slot.x * zoom + 6 * zoom;
             const y = slot.y * zoom + slot.height * zoom - 8 * zoom;
             ctx.fillText(label, x, y);
@@ -128,33 +132,29 @@ export function PreviewCanvas({
 
   return (
     <div className="flex flex-col space-y-3 h-full">
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>Page 1 - {outputPageCount}</span>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" disabled>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" disabled>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex items-center justify-end text-sm text-muted-foreground pr-2">
+        <span>
+          Slides: {pageCount} • Pages: {outputPageCount}
+        </span>
       </div>
       <div
-        className="relative w-full h-full max-h-[75vh] overflow-y-auto overflow-x-hidden rounded-xl border border-border/60 bg-background p-6"
-        style={{ isolation: "isolate" }}
+        className="relative w-full h-full rounded-xl border border-border/60 bg-background overflow-hidden"
+        style={{ isolation: "isolate", position: "relative", zIndex: 1, boxShadow: "none", marginBottom: "32px" }}
       >
-        <div className="flex flex-col items-center gap-10 pb-8">
-          {Array.from({ length: outputPageCount }, (_, i) => (
-            <div key={i} className="flex justify-center w-full">
-              <canvas
-                ref={(el) => {
-                  if (el) canvasRefs.current[i] = el;
-                }}
-                className="rounded-lg transition bg-white border border-border/60"
-                style={{ maxWidth: "100%", display: "block" }}
-              />
-            </div>
-          ))}
+        <div className="max-h-[78vh] overflow-y-auto overflow-x-hidden p-6">
+          <div className="flex flex-col items-center gap-10 pb-8">
+            {Array.from({ length: outputPageCount }, (_, i) => (
+              <div key={i} className="flex justify-center w-full">
+                <canvas
+                  ref={(el) => {
+                    if (el) canvasRefs.current[i] = el;
+                  }}
+                  className="rounded-lg transition bg-white border border-border/60"
+                  style={{ maxWidth: "100%", display: "block" }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
         {isRendering && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/40">

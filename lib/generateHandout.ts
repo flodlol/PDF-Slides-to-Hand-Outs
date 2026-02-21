@@ -7,7 +7,8 @@ import { HandoutSettings } from "./types";
  */
 export async function generateHandout(
   inputPdfBytes: Uint8Array,
-  settings: HandoutSettings
+  settings: HandoutSettings,
+  selectedPages?: number[] // zero-based page indices to keep; defaults to all
 ): Promise<Uint8Array> {
   if (!inputPdfBytes || inputPdfBytes.length < 4) {
     throw new Error("Input PDF bytes are empty.");
@@ -19,7 +20,11 @@ export async function generateHandout(
   const layout = buildLayoutPlan(settings);
 
   const pagesPerSheet = settings.pagesPerSheet;
-  const totalPages = src.getPageCount();
+  const pageIndices =
+    selectedPages && selectedPages.length > 0
+      ? selectedPages
+      : Array.from({ length: src.getPageCount() }, (_, i) => i);
+  const totalPages = pageIndices.length;
   const outputPageCount = Math.ceil(totalPages / pagesPerSheet);
   const contentScale = settings.scale / 100;
 
@@ -30,8 +35,7 @@ export async function generateHandout(
     for (let slotIndex = 0; slotIndex < layout.slotsPt.length; slotIndex++) {
       const inputIndex = cursor + slotIndex;
       if (inputIndex >= totalPages) break;
-
-      const sourcePage = src.getPage(inputIndex);
+      const sourcePage = src.getPage(pageIndices[inputIndex]);
       const embedded = await target.embedPage(sourcePage);
       const slot = layout.slotsPt[slotIndex];
 

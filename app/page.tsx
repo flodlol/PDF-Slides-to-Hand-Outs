@@ -16,6 +16,8 @@ import { defaultSettings, templates, downloadTemplate } from "@/lib/templates";
 import { HandoutSettings, TemplatePreset } from "@/lib/types";
 import { Download, Zap } from "lucide-react";
 import { getCookie, setCookie } from "@/lib/cookies";
+import { SlideStrip } from "@/components/SlideStrip";
+import { useRef } from "react";
 
 interface LoadedPdfMeta {
   name: string;
@@ -29,11 +31,13 @@ export default function HomePage() {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [meta, setMeta] = useState<LoadedPdfMeta | null>(null);
   const [currentOutputPage, setCurrentOutputPage] = useState(0);
   const previewZoom = 0.5;
+  const presetUploadRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("phs-settings");
@@ -46,6 +50,16 @@ export default function HomePage() {
       }
     }
 
+    const storedCustom = localStorage.getItem("phs-custom-templates");
+    if (storedCustom) {
+      try {
+        const parsed = JSON.parse(storedCustom) as TemplatePreset[];
+        setCustomTemplates(parsed);
+      } catch (err) {
+        console.warn("Failed to parse stored custom templates", err);
+      }
+    }
+
     const cookiePreset = getCookie("phs-default-preset");
     if (cookiePreset) setCurrentTemplate(cookiePreset);
   }, []);
@@ -53,6 +67,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem("phs-settings", JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    localStorage.setItem("phs-custom-templates", JSON.stringify(customTemplates));
+  }, [customTemplates]);
 
   const layout = useMemo(() => buildLayoutPlan(settings), [settings]);
 
@@ -67,6 +85,7 @@ export default function HomePage() {
       const pdf = await loadPdfFromBytes(bytes);
       setPdfDoc(pdf);
       setPageCount(pdf.numPages);
+      setSelectedPages(Array.from({ length: pdf.numPages }, (_, i) => i));
       setCurrentOutputPage(0);
     } catch (err) {
       console.error("Failed to load PDF", err);
@@ -89,6 +108,7 @@ export default function HomePage() {
   const handleReset = useCallback(() => {
     setSettings(defaultSettings);
     setCurrentTemplate(undefined);
+    setSelectedPages((prev) => prev);
   }, []);
 
   const handleDownload = useCallback(async () => {
@@ -113,8 +133,19 @@ export default function HomePage() {
         throw new Error("Source data is not a valid PDF (missing %PDF header).");
       }
 
-      const output = await generateHandout(sourceBytes, settings);
-      const blob = new Blob([output], { type: "application/pdf" });
+      if (selectedPages.length === 0) {
+        throw new Error("No slides selected.");
+      }
+
+      const output = await generateHandout(sourceBytes, settings, selectedPages);
+      const arrayBuffer =
+        output.byteOffset === 0 && output.byteLength === output.buffer.byteLength
+          ? (output.buffer as ArrayBuffer)
+          : (output.buffer as ArrayBuffer).slice(
+              output.byteOffset,
+              output.byteOffset + output.byteLength
+            );
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -193,6 +224,41 @@ export default function HomePage() {
                             Save current settings as template
                           </Button>
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => presetUploadRef.current?.click()}
+                          >
+                            Upload preset (JSON)
+                          </Button>
+                          <input
+                            ref={presetUploadRef}
+                            type="file"
+                            accept="application/json"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                const text = await file.text();
+                                const tpl = JSON.parse(text) as TemplatePreset;
+                                if (!tpl?.id || !tpl?.settings) {
+                                  alert("Invalid preset file");
+                                  return;
+                                }
+                                setCustomTemplates((prev) => {
+                                  const filtered = prev.filter((p) => p.id !== tpl.id);
+                                  return [...filtered, tpl];
+                                });
+                                setCurrentTemplate(tpl.id);
+                                setCookie("phs-default-preset", tpl.id, 365);
+                              } catch (err) {
+                                alert("Could not parse preset JSON");
+                              } finally {
+                                e.target.value = "";
+                              }
+                            }}
+                          />
+                          <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => {
@@ -233,29 +299,58 @@ export default function HomePage() {
             </Card>
           </div>
 
-          <Card className="lg:h-[calc(100vh-160px)]">
-            <CardHeader className="flex items-center justify-between space-y-0">
-              <CardTitle>Live Preview</CardTitle>
-              <span className="text-sm text-muted-foreground">Client-side • Instant</span>
-            </CardHeader>
-            <CardContent className="h-full overflow-hidden">
-              {!pdfDoc ? (
-                <div className="flex h-full min-h-[400px] items-center justify-center text-muted-foreground">
-                  Upload a PDF to see the preview.
-                </div>
-              ) : (
-                <PreviewCanvas
-                  pdf={pdfDoc}
-                  layout={layout}
-                  settings={settings}
-                  pageCount={pageCount}
-                  currentOutputPage={currentOutputPage}
-                  onPageChange={setCurrentOutputPage}
-                  zoom={previewZoom}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-8">
+            <Card className="lg:h-[calc(100vh-160px)] shadow-none border-0 bg-transparent relative z-0 overflow-hidden mb-10">
+              <CardHeader className="flex items-center justify-between space-y-0">
+                <CardTitle>Live Preview</CardTitle>
+                <span className="text-sm text-muted-foreground">Client-side • Instant</span>
+              </CardHeader>
+              <CardContent className="h-full overflow-hidden pb-8">
+                {!pdfDoc ? (
+                  <div className="flex h-full min-h-[400px] items-center justify-center text-muted-foreground">
+                    Upload a PDF to see the preview.
+                  </div>
+                ) : (
+                  <PreviewCanvas
+                    pdf={pdfDoc}
+                    layout={layout}
+                    settings={settings}
+                    pageCount={pageCount}
+                    selectedPages={selectedPages}
+                    currentOutputPage={currentOutputPage}
+                    onPageChange={setCurrentOutputPage}
+                    zoom={previewZoom}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {pdfDoc && (
+              <Card className="shadow-none border border-border/60 bg-card relative z-20 w-full">
+                <CardHeader>
+                  <CardTitle>Slide picker</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SlideStrip
+                    pdf={pdfDoc}
+                    selectedPages={selectedPages}
+                    onToggle={(pageIndex) => {
+                      setSelectedPages((prev) =>
+                        prev.includes(pageIndex)
+                          ? prev.filter((p) => p !== pageIndex)
+                          : [...prev, pageIndex].sort((a, b) => a - b)
+                      );
+                    }}
+                    onSelectAll={() =>
+                      setSelectedPages(Array.from({ length: pageCount }, (_, i) => i))
+                    }
+                    onDeselectAll={() => setSelectedPages([])}
+                    maxWidth={layout.pageWidthPx * previewZoom + 160}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </main>

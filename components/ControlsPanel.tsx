@@ -24,8 +24,8 @@ const pageOptions: PagesPerSheet[] = [1, 2, 4, 6, 9];
 
 export function ControlsPanel({ settings, onChange, onReset }: ControlsPanelProps) {
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Pages per sheet</Label>
           <Select
@@ -61,8 +61,8 @@ export function ControlsPanel({ settings, onChange, onReset }: ControlsPanelProp
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div>
+      <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <Label>Margins</Label>
             <span className="text-muted-foreground">{settings.marginMm} mm</span>
@@ -75,7 +75,7 @@ export function ControlsPanel({ settings, onChange, onReset }: ControlsPanelProp
             onValueChange={([value]) => onChange({ marginMm: value })}
           />
         </div>
-        <div>
+        <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <Label>Spacing</Label>
             <span className="text-muted-foreground">{settings.spacingMm} mm</span>
@@ -88,7 +88,7 @@ export function ControlsPanel({ settings, onChange, onReset }: ControlsPanelProp
             onValueChange={([value]) => onChange({ spacingMm: value })}
           />
         </div>
-        <div>
+        <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <Label>Scale</Label>
             <span className="text-muted-foreground">{settings.scale}%</span>
