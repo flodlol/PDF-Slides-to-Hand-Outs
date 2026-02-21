@@ -18,11 +18,14 @@ import { Download, Zap } from "lucide-react";
 import { getCookie, setCookie } from "@/lib/cookies";
 import { SlideStrip } from "@/components/SlideStrip";
 import { useRef } from "react";
+import { CookieBanner } from "@/components/CookieBanner";
 
 interface LoadedPdfMeta {
   name: string;
   size: number;
 }
+
+const SELECTED_TEMPLATE_KEY = "phs-selected-template";
 
 export default function HomePage() {
   const [settings, setSettings] = useState<HandoutSettings>(defaultSettings);
@@ -60,8 +63,10 @@ export default function HomePage() {
       }
     }
 
+    const selected = localStorage.getItem(SELECTED_TEMPLATE_KEY);
     const cookiePreset = getCookie("phs-default-preset");
-    if (cookiePreset) setCurrentTemplate(cookiePreset);
+    const templateId = selected || cookiePreset;
+    if (templateId) setCurrentTemplate(templateId);
   }, []);
 
   useEffect(() => {
@@ -99,6 +104,9 @@ export default function HomePage() {
     setSettings(tpl.settings);
     setCurrentTemplate(tpl.id);
     setCookie("phs-default-preset", tpl.id, 365);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(SELECTED_TEMPLATE_KEY, tpl.id);
+    }
   }, []);
 
   const handleSettingsChange = useCallback((patch: Partial<HandoutSettings>) => {
@@ -217,8 +225,7 @@ export default function HomePage() {
                                 settings,
                               };
                               setCustomTemplates((prev) => [...prev, newTpl]);
-                              setCurrentTemplate(id);
-                              setCookie("phs-default-preset", id, 365);
+                              handleTemplate(newTpl);
                             }}
                           >
                             Save current settings as template
@@ -249,8 +256,7 @@ export default function HomePage() {
                                   const filtered = prev.filter((p) => p.id !== tpl.id);
                                   return [...filtered, tpl];
                                 });
-                                setCurrentTemplate(tpl.id);
-                                setCookie("phs-default-preset", tpl.id, 365);
+                                handleTemplate(tpl);
                               } catch (err) {
                                 alert("Could not parse preset JSON");
                               } finally {
@@ -264,6 +270,9 @@ export default function HomePage() {
                             onClick={() => {
                               setCookie("phs-default-preset", "", -1);
                               setCurrentTemplate(undefined);
+                              if (typeof localStorage !== "undefined") {
+                                localStorage.removeItem(SELECTED_TEMPLATE_KEY);
+                              }
                             }}
                           >
                             Clear default preset cookie
@@ -353,6 +362,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      <CookieBanner />
     </main>
   );
 }
