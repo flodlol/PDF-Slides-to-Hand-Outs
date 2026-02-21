@@ -108,7 +108,7 @@ export function PreviewCanvas({
             if (srcIndex >= pageCount) return;
             const label = `${srcIndex + 1}`;
             const x = slot.x * zoom + 6 * zoom;
-            const y = (slot.y + slot.height) * zoom - 6 * zoom;
+            const y = slot.y * zoom + slot.height * zoom - 8 * zoom;
             ctx.fillText(label, x, y);
           });
         }
@@ -139,7 +139,10 @@ export function PreviewCanvas({
           </Button>
         </div>
       </div>
-      <div className="relative w-full h-full max-h-[75vh] overflow-y-auto overflow-x-hidden rounded-xl border border-border/60 bg-muted/40 p-6">
+      <div
+        className="relative w-full h-full max-h-[75vh] overflow-y-auto overflow-x-hidden rounded-xl border border-border/60 bg-background p-6"
+        style={{ isolation: "isolate" }}
+      >
         <div className="flex flex-col items-center gap-10 pb-8">
           {Array.from({ length: outputPageCount }, (_, i) => (
             <div key={i} className="flex justify-center w-full">
@@ -147,7 +150,7 @@ export function PreviewCanvas({
                 ref={(el) => {
                   if (el) canvasRefs.current[i] = el;
                 }}
-                className="rounded-lg transition bg-white border border-border/60 shadow-[0_12px_40px_-18px_rgba(0,0,0,0.35)]"
+                className="rounded-lg transition bg-white border border-border/60"
                 style={{ maxWidth: "100%", display: "block" }}
               />
             </div>
