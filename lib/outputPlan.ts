@@ -15,19 +15,21 @@ export function buildOutputPlan(
   if (!orderedPages || orderedPages.length === 0) return [];
 
   const plan: OutputPagePlan[] = [];
-  let current: OutputPagePlan & { signature: string } | null = null;
+  let current: OutputPagePlan | null = null;
+  let currentSignature: string | null = null;
 
   for (const pageIndex of orderedPages) {
     const effectiveSettings = overrides[pageIndex] ?? globalSettings;
     const signature = settingsSignature(effectiveSettings);
-    if (!current || current.signature !== signature || current.pageIndices.length >= effectiveSettings.pagesPerSheet) {
-      current = { settings: effectiveSettings, pageIndices: [], signature };
+    if (!current || currentSignature !== signature || current.pageIndices.length >= effectiveSettings.pagesPerSheet) {
+      current = { settings: effectiveSettings, pageIndices: [] };
+      currentSignature = signature;
       plan.push(current);
     }
     current.pageIndices.push(pageIndex);
   }
 
-  return plan.map(({ signature, ...rest }) => rest);
+  return plan;
 }
 
 function settingsSignature(settings: HandoutSettings) {
