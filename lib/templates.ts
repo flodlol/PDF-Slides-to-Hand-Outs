@@ -9,6 +9,10 @@ export const defaultSettings: HandoutSettings = {
   showPageNumbers: true,
   showSlideNumbers: false,
   scale: 95,
+  notesEnabled: false,
+  notesLineCount: 6,
+  notesLineSpacingMm: 6,
+  notesPosition: "bottom",
 };
 
 export const templates: TemplatePreset[] = [
@@ -25,6 +29,10 @@ export const templates: TemplatePreset[] = [
       showPageNumbers: true,
       showSlideNumbers: true,
       scale: 96,
+      notesEnabled: false,
+      notesLineCount: 6,
+      notesLineSpacingMm: 6,
+      notesPosition: "bottom",
     },
   },
   {
@@ -40,6 +48,10 @@ export const templates: TemplatePreset[] = [
       showPageNumbers: true,
       showSlideNumbers: false,
       scale: 92,
+      notesEnabled: false,
+      notesLineCount: 6,
+      notesLineSpacingMm: 6,
+      notesPosition: "bottom",
     },
   },
   {
@@ -55,6 +67,10 @@ export const templates: TemplatePreset[] = [
       showPageNumbers: false,
       showSlideNumbers: true,
       scale: 90,
+      notesEnabled: false,
+      notesLineCount: 6,
+      notesLineSpacingMm: 6,
+      notesPosition: "bottom",
     },
   },
   {
@@ -70,6 +86,10 @@ export const templates: TemplatePreset[] = [
       showPageNumbers: false,
       showSlideNumbers: false,
       scale: 98,
+      notesEnabled: false,
+      notesLineCount: 6,
+      notesLineSpacingMm: 6,
+      notesPosition: "bottom",
     },
   },
   {
@@ -85,6 +105,10 @@ export const templates: TemplatePreset[] = [
       showPageNumbers: true,
       showSlideNumbers: true,
       scale: 100,
+      notesEnabled: false,
+      notesLineCount: 6,
+      notesLineSpacingMm: 6,
+      notesPosition: "bottom",
     },
   },
 ];

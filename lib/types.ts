@@ -1,6 +1,6 @@
 export type Orientation = "portrait" | "landscape";
 
-export type PagesPerSheet = 1 | 2 | 4 | 6 | 9;
+export type PagesPerSheet = 1 | 2 | 3 | 4 | 6 | 9;
 
 export interface HandoutSettings {
   pagesPerSheet: PagesPerSheet;
@@ -11,6 +11,10 @@ export interface HandoutSettings {
   showPageNumbers: boolean;
   showSlideNumbers: boolean;
   scale: number; // 80-100 percent
+  notesEnabled: boolean;
+  notesLineCount: number;
+  notesLineSpacingMm: number;
+  notesPosition: "bottom" | "left" | "right";
 }
 
 export interface TemplatePreset {

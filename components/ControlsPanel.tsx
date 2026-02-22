@@ -20,7 +20,7 @@ interface ControlsPanelProps {
   onReset?: () => void;
 }
 
-const pageOptions: PagesPerSheet[] = [1, 2, 4, 6, 9];
+const pageOptions: PagesPerSheet[] = [1, 2, 3, 4, 6, 9];
 
 export function ControlsPanel({ settings, onChange, onReset }: ControlsPanelProps) {
   return (

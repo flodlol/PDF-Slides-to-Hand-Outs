@@ -2,30 +2,32 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
-import { LayoutPlanWithUnits, HandoutSettings } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { HandoutSettings } from "@/lib/types";
+import { Loader2 } from "lucide-react";
+import { buildLayoutPlan, mmToPx } from "@/lib/layoutEngine";
+import { buildOutputPlan, SlideSettingsOverrideMap } from "@/lib/outputPlan";
+import { getNotesLayout } from "@/lib/notesLayout";
 
 interface PreviewCanvasProps {
   pdf: PDFDocumentProxy | null;
-  layout: LayoutPlanWithUnits;
   settings: HandoutSettings;
   pageCount: number;
   selectedPages: number[]; // zero-based indices reflecting selection order
   currentOutputPage: number; // kept for compatibility; not used when scrolling all pages
   onPageChange: (page: number) => void;
   zoom: number;
+  pageOverrides: SlideSettingsOverrideMap;
 }
 
 export function PreviewCanvas({
   pdf,
-  layout,
   settings,
   pageCount,
   selectedPages,
   currentOutputPage,
   onPageChange,
   zoom,
+  pageOverrides,
 }: PreviewCanvasProps) {
   const canvasRefs = useRef<HTMLCanvasElement[]>([]);
   const cacheRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
@@ -35,11 +37,25 @@ export function PreviewCanvas({
     () => (selectedPages.length > 0 ? selectedPages : Array.from({ length: pageCount }, (_, i) => i)),
     [selectedPages, pageCount]
   );
-  const effectivePageCount = effectivePages.length;
-  const outputPageCount = useMemo(
-    () => Math.max(1, Math.ceil(effectivePageCount / settings.pagesPerSheet)),
-    [effectivePageCount, settings.pagesPerSheet]
+  const outputPlan = useMemo(
+    () => buildOutputPlan(effectivePages, settings, pageOverrides),
+    [effectivePages, settings, pageOverrides]
   );
+  const outputPageCount = Math.max(1, outputPlan.length);
+  const layoutCache = useMemo(() => {
+    const cache = new Map<string, ReturnType<typeof buildLayoutPlan>>();
+    outputPlan.forEach((plan) => {
+      const key = JSON.stringify(plan.settings);
+      if (!cache.has(key)) {
+        cache.set(key, buildLayoutPlan(plan.settings));
+      }
+    });
+    const globalKey = JSON.stringify(settings);
+    if (!cache.has(globalKey)) {
+      cache.set(globalKey, buildLayoutPlan(settings));
+    }
+    return cache;
+  }, [outputPlan, settings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,12 +63,17 @@ export function PreviewCanvas({
       if (!pdf) return;
       setIsRendering(true);
       const dpr = window.devicePixelRatio || 1;
-      const scaledWidth = Math.round(layout.pageWidthPx * zoom);
-      const scaledHeight = Math.round(layout.pageHeightPx * zoom);
+      const baseLayout = layoutCache.get(JSON.stringify(settings));
+      if (!baseLayout) return;
+      const scaledWidth = Math.round(baseLayout.pageWidthPx * zoom);
+      const scaledHeight = Math.round(baseLayout.pageHeightPx * zoom);
 
-        const pages = Array.from({ length: outputPageCount }, (_, i) => i);
+      const pages = Array.from({ length: outputPageCount }, (_, i) => i);
 
       for (const outIndex of pages) {
+        const plan = outputPlan[outIndex];
+        const layout = plan ? layoutCache.get(JSON.stringify(plan.settings)) : baseLayout;
+        if (!layout || !plan) continue;
         const canvas = canvasRefs.current[outIndex];
         if (!canvas) continue;
         const ctx = canvas.getContext("2d");
@@ -67,38 +88,78 @@ export function PreviewCanvas({
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, scaledWidth, scaledHeight);
 
-          const startIndex = outIndex * settings.pagesPerSheet;
-          const slots = layout.slotsPx;
+        const slots = layout.slotsPx;
+        const slotsMm = layout.slots;
 
-          for (let i = 0; i < slots.length; i++) {
-            const srcIndex = startIndex + i;
-            if (srcIndex >= effectivePageCount) break;
-            const pageNumber = effectivePages[srcIndex] + 1; // pdf.js is 1-based
+        for (let i = 0; i < plan.pageIndices.length; i++) {
+          const pageNumber = plan.pageIndices[i] + 1; // pdf.js is 1-based
 
           const sourceCanvas = await renderPageToCanvas(pageNumber, pdf, cacheRef.current);
           if (cancelled) return;
 
           const slot = slots[i];
-          const fit = Math.min(slot.width / sourceCanvas.width, slot.height / sourceCanvas.height);
-          const renderScale = fit * (settings.scale / 100) * zoom;
+          const slotMm = slotsMm[i];
+          const notes = getNotesLayout(slotMm.widthMm, slotMm.heightMm, plan.settings);
+          const notesOffsetPx =
+            notes.position === "bottom" ? mmToPx(notes.notesAreaMm + notes.gapMm) : 0;
+          const sideOffsetPx =
+            notes.position === "left" || notes.position === "right"
+              ? mmToPx(notes.notesAreaWidthMm + notes.gapMm)
+              : 0;
+          const contentHeightPx = Math.max(8, slot.height - notesOffsetPx);
+          const contentWidthPx = Math.max(8, slot.width - sideOffsetPx);
+
+          const fit = Math.min(contentWidthPx / sourceCanvas.width, contentHeightPx / sourceCanvas.height);
+          const renderScale = fit * (plan.settings.scale / 100) * zoom;
           const renderWidth = sourceCanvas.width * renderScale;
           const renderHeight = sourceCanvas.height * renderScale;
-          const x = slot.x * zoom + (slot.width * zoom - renderWidth) / 2;
-          const y = slot.y * zoom + (slot.height * zoom - renderHeight) / 2;
+          const x =
+            notes.position === "left"
+              ? slot.x * zoom + sideOffsetPx * zoom + (contentWidthPx * zoom - renderWidth) / 2
+              : slot.x * zoom + (contentWidthPx * zoom - renderWidth) / 2;
+          const y = slot.y * zoom + (contentHeightPx * zoom - renderHeight) / 2;
 
           ctx.save();
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = "high";
           ctx.drawImage(sourceCanvas, x, y, renderWidth, renderHeight);
-          if (settings.showFrame) {
+          if (plan.settings.showFrame) {
             ctx.strokeStyle = "rgba(60, 70, 90, 0.7)";
             ctx.lineWidth = Math.max(1, 1.2 * zoom);
             ctx.strokeRect(slot.x * zoom, slot.y * zoom, slot.width * zoom, slot.height * zoom);
           }
           ctx.restore();
+          if (notes.enabled) {
+            const gapPx = mmToPx(notes.gapMm) * zoom;
+            const lineSpacingPx = mmToPx(notes.lineSpacingMm) * zoom;
+            const paddingPx = 6 * zoom;
+            const startY =
+              notes.position === "bottom"
+                ? slot.y * zoom + contentHeightPx * zoom + gapPx + lineSpacingPx
+                : slot.y * zoom + gapPx + lineSpacingPx;
+            const areaStartX =
+              notes.position === "right"
+                ? slot.x * zoom + contentWidthPx * zoom + gapPx + paddingPx
+                : slot.x * zoom + paddingPx;
+            const areaEndX =
+              notes.position === "left"
+                ? slot.x * zoom + contentWidthPx * zoom - paddingPx
+                : slot.x * zoom + slot.width * zoom - paddingPx;
+            ctx.save();
+            ctx.strokeStyle = "rgba(170,180,190,0.75)";
+            ctx.lineWidth = Math.max(1, 0.9 * zoom);
+            for (let line = 0; line < notes.lineCount; line++) {
+              const yLine = startY + line * lineSpacingPx;
+              ctx.beginPath();
+              ctx.moveTo(areaStartX, yLine);
+              ctx.lineTo(areaEndX, yLine);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
         }
 
-        if (settings.showPageNumbers) {
+        if (plan.settings.showPageNumbers) {
           ctx.fillStyle = "rgba(110,120,140,0.9)";
           ctx.font = `${12 * zoom}px 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system`;
           const label = `${outIndex + 1} / ${outputPageCount}`;
@@ -106,16 +167,19 @@ export function PreviewCanvas({
           ctx.fillText(label, (scaledWidth - textWidth) / 2, scaledHeight - 12 * zoom);
         }
 
-        if (settings.showSlideNumbers) {
+        if (plan.settings.showSlideNumbers) {
           ctx.fillStyle = "rgba(70,80,95,0.9)";
           ctx.font = `${11 * zoom}px 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system`;
-          const startIndex = outIndex * settings.pagesPerSheet;
-          slots.forEach((slot, i) => {
-            const srcIndex = startIndex + i;
-            if (srcIndex >= effectivePageCount) return;
-            const label = `${effectivePages[srcIndex] + 1}`;
+          plan.pageIndices.forEach((pageIndex, i) => {
+            const slot = slots[i];
+            const slotMm = slotsMm[i];
+            const notes = getNotesLayout(slotMm.widthMm, slotMm.heightMm, plan.settings);
+            const notesOffsetPx =
+              notes.position === "bottom" ? mmToPx(notes.notesAreaMm + notes.gapMm) : 0;
+            const contentHeightPx = Math.max(8, slot.height - notesOffsetPx);
+            const label = `${pageIndex + 1}`;
             const x = slot.x * zoom + 6 * zoom;
-            const y = slot.y * zoom + slot.height * zoom - 8 * zoom;
+            const y = slot.y * zoom + contentHeightPx * zoom - 8 * zoom;
             ctx.fillText(label, x, y);
           });
         }
@@ -131,13 +195,13 @@ export function PreviewCanvas({
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [pdf, layout, settings, pageCount, zoom, outputPageCount, effectivePages, effectivePageCount]);
+  }, [pdf, settings, pageCount, zoom, outputPageCount, effectivePages, outputPlan, layoutCache, pageOverrides]);
 
   return (
     <div className="flex flex-col space-y-3 h-full">
       <div className="flex items-center justify-end text-sm text-muted-foreground pr-2">
         <span>
-          Slides: {pageCount} • Pages: {outputPageCount}
+          Slides: {effectivePages.length} • Pages: {outputPageCount}
         </span>
       </div>
       <div

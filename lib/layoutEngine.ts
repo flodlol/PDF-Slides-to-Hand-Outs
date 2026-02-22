@@ -13,6 +13,8 @@ function getGrid(pagesPerSheet: PagesPerSheet, orientation: HandoutSettings["ori
       return { rows: 1, cols: 1 };
     case 2:
       return orientation === "portrait" ? { rows: 2, cols: 1 } : { rows: 1, cols: 2 };
+    case 3:
+      return orientation === "portrait" ? { rows: 3, cols: 1 } : { rows: 1, cols: 3 };
     case 4:
       return { rows: 2, cols: 2 };
     case 6:

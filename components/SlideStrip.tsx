@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 interface SlideStripProps {
   pdf: PDFDocumentProxy;
@@ -12,6 +14,7 @@ interface SlideStripProps {
   onSelectAll: () => void;
   onDeselectAll: () => void;
   maxWidth?: number; // cap outer container width
+  pageOverrides?: Record<number, unknown>;
 }
 
 export function SlideStrip({
@@ -21,13 +24,17 @@ export function SlideStrip({
   onSelectAll,
   onDeselectAll,
   maxWidth,
+  pageOverrides,
 }: SlideStripProps) {
   const [pageCount, setPageCount] = useState(0);
+  const [thumbScale, setThumbScale] = useState(100);
   const canvasRefs = useRef<HTMLCanvasElement[]>([]);
   const renderCache = useRef<Map<number, HTMLCanvasElement>>(new Map());
 
   useEffect(() => {
     setPageCount(pdf.numPages);
+    renderCache.current.clear();
+    canvasRefs.current = [];
     // Kick off eager rendering of all thumbs immediately
     let cancelled = false;
     (async () => {
@@ -63,11 +70,15 @@ export function SlideStrip({
     ctx.drawImage(src, 0, 0);
   }
 
+  const cardWidth = Math.round(180 * (thumbScale / 100));
+
   return (
-    <div className="space-y-3 w-full">
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>Slides ({selectedPages.length}/{pageCount})</span>
-        <div className="flex gap-2">
+    <div className="space-y-4 w-full">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <span>
+          Slides ({selectedPages.length}/{pageCount})
+        </span>
+        <div className="flex flex-wrap gap-1">
           <Button variant="ghost" size="sm" onClick={onSelectAll}>
             Select all
           </Button>
@@ -76,34 +87,79 @@ export function SlideStrip({
           </Button>
         </div>
       </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>Tip: click a slide to include/exclude it</span>
+          <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-1.5">
+            <Label className="text-xs">Thumbnail scale</Label>
+            <div className="w-[140px]">
+              <Slider
+                value={[thumbScale]}
+                min={70}
+                max={140}
+                step={5}
+                onValueChange={([value]) => setThumbScale(value)}
+              />
+            </div>
+            <span className="tabular-nums">{thumbScale}%</span>
+          </div>
+        </div>
+      </div>
+
       <div
         className="rounded-xl border border-border/60 bg-muted/50 p-4 w-full"
         style={maxWidth ? { maxWidth, margin: "0 auto" } : undefined}
       >
         <div
-          className="flex w-full gap-4 overflow-x-auto overflow-y-hidden"
-          style={{ minWidth: "100%" }}
+          className="grid gap-4"
+          style={{
+            gridTemplateColumns: `repeat(auto-fill, minmax(${Math.max(150, cardWidth)}px, 1fr))`,
+          }}
         >
           {Array.from({ length: pageCount }, (_, i) => {
-            const isSelected = selectedPages.includes(i);
+            const isIncluded = selectedPages.includes(i);
+            const hasOverride = Boolean(pageOverrides?.[i]);
             return (
               <div
                 key={i}
                 className={cn(
-                  "flex-shrink-0 flex flex-col items-center gap-2 rounded-lg border px-3 py-3 transition cursor-pointer min-w-[240px] max-w-[280px]",
-                  isSelected ? "border-primary bg-primary/5" : "border-border bg-background/70"
+                  "relative flex flex-col gap-2 rounded-lg border px-3 py-3 transition cursor-pointer bg-background/80",
+                  isIncluded ? "border-primary/60 ring-2 ring-primary/30" : "border-border",
+                  !isIncluded && "opacity-60"
                 )}
                 onClick={() => onToggle(i)}
               >
-                <canvas
-                  ref={(el) => {
-                    if (el) canvasRefs.current[i] = el;
-                  }}
-                  className={cn("rounded bg-white", !isSelected && "opacity-60")}
-                  style={{ width: "100%", height: "auto" }}
-                />
-                <span className="text-xs text-muted-foreground">Slide {i + 1}</span>
-                {!isSelected && <span className="text-[10px] text-destructive">Excluded</span>}
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Slide {i + 1}</span>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={isIncluded}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={() => onToggle(i)}
+                      className="h-3 w-3 rounded border-border/70 text-primary"
+                    />
+                    <span>Include</span>
+                  </label>
+                </div>
+
+                <div className="relative">
+                  <canvas
+                    ref={(el) => {
+                      if (el) canvasRefs.current[i] = el;
+                    }}
+                    className={cn("rounded bg-white", !isIncluded && "opacity-60")}
+                    style={{ width: "100%", height: "auto" }}
+                  />
+                  {hasOverride && (
+                    <span className="absolute left-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
+                      Override
+                    </span>
+                  )}
+                </div>
+
+                {!isIncluded && <span className="text-[10px] text-destructive">Excluded</span>}
               </div>
             );
           })}
