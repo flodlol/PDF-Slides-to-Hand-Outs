@@ -1,32 +1,180 @@
-# PDF Handout Studio
+<div align="center">
+  <img src=“./public/logo/1024.png" alt=“Hand-Outs Logo" width="120">
+  <h1>PDF Hand-Out Studio</h1>
+  <p>A simple, privacy-first tool for turning PDF presentations into printable handout sheets.<br> Everything runs in your browser, your files never leave your device.</p>
 
-Fast, fully client-side Next.js 14 app to turn any PDF into polished N-up handout PDFs with live preview.
+https://hand-outs.com
+
+</div>
+
+---
+
+## What is this?
+
+If you've ever needed to print out lecture slides, meeting decks, or any multi-page PDF as a compact handout (2, 4, 6, or 9 slides per page), this is for you. Just drag and drop your PDF, pick a layout, and download the result. No sign-up, no uploads, no waiting.
+
+<br>
+
+<div align="center">
+  <img src="./public/videos/preview.gif" alt="PDF Hand-Out Studio Preview" width="650">
+</div>
+
+<br>
+
+I built this because the existing options were either clunky desktop apps or online tools that required uploading sensitive documents to someone else's server. This one keeps your data where it belongs, on your machine.
+
+---
 
 ## Features
-- Upload a PDF (drag & drop), parsed instantly in the browser.
-- Configure pages-per-sheet, orientation, margins, spacing, scale, frame, and page numbers.
-- One-click templates for common layouts.
-- Live canvas preview using pdf.js with zoom and paging.
-- Export new PDF using pdf-lib, preserving vector quality — runs entirely client-side.
-- Light/dark theme with system follow and persistence.
-- Vercel-ready; no server processing required.
 
-## Stack
-- Next.js 14 (App Router), React 18, TypeScript
-- TailwindCSS + shadcn/ui primitives
-- pdf-lib for generation
-- pdfjs-dist for preview rendering
-- next-themes for theming
+- **Drag & drop upload** — Just drop your PDF and you're ready to go
+- **Multiple layouts** — 1, 2, 3, 4, 6, or 9 slides per page, portrait or landscape
+- **Live preview** — See exactly what you'll get before exporting
+- **Fine-tuned control** — Adjust margins, spacing, scale, frames, and page numbers
+- **Built-in templates** — One-click presets for common use cases
+- **Notes lines** — Optional ruled lines for taking notes
+- **Slide selection** — Include only the pages you need
+- **Dark/light mode** — Follows your system preference (or toggle manually)
+- **Completely private** — All processing happens locally in your browser
 
+---
 
+## Getting Started
 
-## File Structure
-- `app/` – App Router entry points (`layout.tsx`, `page.tsx`).
-- `components/` – UI building blocks and feature components.
-- `lib/` – Core logic: layout engine, handout generator, templates, types, pdf.js loader.
-- `styles/globals.css` – Tailwind base and theme tokens.
+### Use it online
 
-## Notes
-- All processing stays in-browser; PDFs are never uploaded.
-- pdf.js worker is lazy-loaded when needed.
-- Settings persist in localStorage.
+The easiest way is to use the hosted version (if deployed). No installation needed. https://hand-outs.com
+
+### Run it locally
+
+```bash
+# Clone the repo
+git clone https://github.com/your-username/pdf-handout-studio.git
+cd pdf-handout-studio
+
+# Install dependencies
+npm install
+
+# Start the dev server
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Build for production
+
+```bash
+npm run build
+npm start
+```
+
+---
+
+## How It Works
+
+The app is built with **Next.js 14** using the App Router, **React 18**, and **TypeScript**.
+
+### Architecture
+
+```
+app/           --> Next.js App Router pages (layout.tsx, page.tsx)
+components/    --> React UI components (controls, preview, upload zone, etc.)
+lib/           --> Core logic and utilities
+styles/        --> Global CSS and Tailwind config
+```
+
+### The layout engine
+
+When you configure a handout, the layout engine (`lib/layoutEngine.ts`) calculates the exact positions and sizes for each slide slot on the output page. It handles:
+
+- Grid calculations based on pages-per-sheet and orientation
+- Margin and spacing math (all in millimeters, converted to PDF points)
+- Slot positioning for consistent layouts
+
+### PDF generation
+
+The actual PDF creation happens in `lib/generateHandout.ts` using **pdf-lib**. This library lets us:
+
+- Embed pages from the source PDF into new pages
+- Scale and position each slide precisely
+- Add frames, page numbers, and notes lines
+- Output a new PDF that preserves vector quality
+
+Since pdf-lib runs entirely in JavaScript, there's no server needed, the browser does all the work.
+
+### Preview rendering
+
+For the live preview, we use **pdfjs-dist** (Mozilla's PDF.js) to render pages to a canvas. The worker is lazy-loaded to keep initial page load fast.
+
+### Theming
+
+Dark and light modes use **next-themes** with CSS variables. Your preference is remembered in localStorage.
+
+---
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 14 (App Router) |
+| UI | React 18, TailwindCSS, shadcn/ui |
+| PDF Generation | pdf-lib |
+| PDF Preview | pdfjs-dist |
+| Theming | next-themes |
+| Language | TypeScript |
+
+---
+
+## Privacy
+
+This is a big one. **Your PDFs never leave your device.**
+
+- No server uploads
+- No analytics tracking your documents
+- No cloud processing
+
+The entire app runs client-side. When you "export" a PDF, your browser generates it locally and triggers a download. 
+
+---
+
+## Contributing
+
+Contributions are welcome and appreciated! Whether it's fixing a typo, improving the UI, adding a feature, or just reporting a bug. All help is valued.
+
+### Ways to contribute
+
+- **Bug reports** — Found something broken? Open an issue
+- **Feature requests** — Have an idea? Let's hear it
+- **Pull requests** — Code contributions are always welcome
+- **Documentation** — Help make the README or comments clearer
+- **Design feedback** — Suggestions for better UX are great too
+
+### To submit a PR
+
+1. Fork the repo
+2. Create a branch (`git checkout -b my-feature`)
+3. Make your changes
+4. Run `npm run lint` to check for issues
+5. Commit and push
+6. Open a pull request
+
+No contribution is too small. Even fixing a single typo helps.
+
+---
+
+## License
+
+MIT — do whatever you want with it.
+
+---
+
+## Acknowledgments
+
+- [pdf-lib](https://pdf-lib.js.org/) for making client-side PDF generation possible
+- [PDF.js](https://mozilla.github.io/pdf.js/) for reliable PDF rendering
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component primitives
+- Everyone who's given feedback or contributed
+
+---
+
+If you find this useful, a star on GitHub would be nice. Thanks for checking it out! ❤️
