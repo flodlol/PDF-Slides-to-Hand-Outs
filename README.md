@@ -1,5 +1,5 @@
 <div align="center">
-  <img src=“./public/logo/1024.png" alt=“Hand-Outs Logo" width="120">
+  <img src="public/logo/1024.png" alt="Hand-Outs Logo" width="160">
   <h1>PDF Hand-Out Studio</h1>
   <p>A simple, privacy-first tool for turning PDF presentations into printable handout sheets.<br> Everything runs in your browser, your files never leave your device.</p>
 
@@ -16,7 +16,7 @@ If you've ever needed to print out lecture slides, meeting decks, or any multi-p
 <br>
 
 <div align="center">
-  <img src="./public/videos/preview.gif" alt="PDF Hand-Out Studio Preview" width="650">
+  <img src="public/videos/preview.gif" alt="PDF Hand-Out Studio Preview" width="650">
 </div>
 
 <br>
