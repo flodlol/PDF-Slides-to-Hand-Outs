@@ -5,7 +5,7 @@
 
 https://hand-outs.com
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-hand--outs.com-brightgreen?style=flat-square)](https://hand-outs.com) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE) [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/) [![100% Client-Side](https://img.shields.io/badge/100%25-Client--Side-blue?style=flat-square)](#privacy) [![No Tracking](https://img.shields.io/badge/No-Tracking-red?style=flat-square)](#privacy)
 
 </div>
 
@@ -23,7 +23,36 @@ If you've ever needed to print out lecture slides, meeting decks, or any multi-p
 
 <br>
 
-I built this because the existing options were either clunky desktop apps or online tools that required uploading sensitive documents to someone else's server. This one keeps your data where it belongs, on your machine.
+---
+
+## Why This Exists
+
+I got tired of the same frustrating cycle every time I needed to print lecture slides:
+
+- **Adobe Acrobat?** Buried in menus, confusing options, requires a subscription.
+- **Online tools?** Upload my confidential slides to some random server? No thanks.
+- **Desktop apps?** Install sketchy software just to print 4 slides per page?
+
+I just wanted something simple: drag, drop, done. So I built it.
+
+No accounts. No uploads. No tracking. Just a tool that respects your time and your privacy.
+
+---
+
+## Comparison
+
+
+
+| | This | Adobe | Online | Desktop |
+|---|:---:|:---:|:---:|:---:|
+| **100% Private** | ✅ | ⚠️ | ❌ | ✅ |
+| **No Install** | ✅ | ❌ | ✅ | ❌ |
+| **Free** | ✅ | ❌ | ⚠️ | ⚠️ |
+| **Modern UI** | ✅ | ❌ | ⚠️ | ❌ |
+| **Custom Margins** | ✅ | ⚠️ | ⚠️ | ⚠️ |
+| **Live Preview** | ✅ | ❌ | ⚠️ | ❌ |
+| **Notes Lines** | ✅ | ❌ | ❌ | ❌ |
+| **No Tracking** | ✅ | ❌ | ❌ | ⚠️ |
 
 ---
 
@@ -179,4 +208,5 @@ MIT — do whatever you want with it.
 
 ---
 
-If you find this useful, a star on GitHub would be nice. Thanks for checking it out! ❤️
+If you find this useful, a star on GitHub would be nice. ⭐
+Thanks for checking it out! ❤️
