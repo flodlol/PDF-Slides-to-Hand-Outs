@@ -208,5 +208,9 @@ MIT — do whatever you want with it.
 
 ---
 
-If you find this useful, a star on GitHub would be nice. ⭐
-Thanks for checking it out! ❤️
+<div align="center">
+  If you find this useful, a star on GitHub would be nice. ⭐ <br/>
+  Thanks for checking it out! ❤️
+  <br/>
+  <a href="https://github.com/sponsors/flodlol">Sponsor this project</a>
+</div>
