@@ -60,23 +60,27 @@
 ### Submitting Code
 
 1. Create a new branch from `main`:
+   
    ```bash
    git checkout -b feature/your-feature-name
    ```
-2. Make your changes
-3. Ensure the project builds without errors:
+3. Make your changes
+4. Ensure the project builds without errors:
+   
    ```bash
    npm run build
    ```
-4. Run the linter:
+6. Run the linter:
+   
    ```bash
    npm run lint
    ```
-5. Commit your changes with a clear commit message:
+8. Commit your changes with a clear commit message:
+   
    ```bash
    git commit -m "feat: add your feature description"
    ```
-6. Push to your fork and open a **Pull Request**
+10. Push to your fork and open a **Pull Request**
 
 ---
 
