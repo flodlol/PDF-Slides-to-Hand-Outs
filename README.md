@@ -48,7 +48,7 @@ No accounts. No uploads. No tracking. Just a tool that respects your time and yo
 - **Built-in templates** — One-click presets for common use cases
 - **Notes lines** — Optional ruled lines for taking notes
 - **Slide selection** — Include only the pages you need
-- **Hide repeated elements** — Automatically detects and removes recurring headers, footers, and logos from slides
+- **Hide repeated elements** — Automatically detects and removes recurring headers, footers, ... from slides
 - **Dark/light mode** — Follows your system preference (or toggle manually)
 - **Completely private** — All processing happens locally in your browser
 
@@ -64,7 +64,7 @@ The easiest way is to use the hosted version (if deployed). No installation need
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/pdf-handout-studio.git
+git clone https://github.com/flodlol/pdf-handout-studio.git
 cd pdf-handout-studio
 
 # Install dependencies
