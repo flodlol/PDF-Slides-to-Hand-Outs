@@ -12,19 +12,22 @@
 
 1. **Fork** the repository
 2. **Clone** your fork:
+   
    ```bash
    git clone https://github.com/your-username/PDF-Slides-to-Handouts-Converter.git
    cd PDF-Slides-to-Handouts-Converter
    ```
-3. **Install dependencies:**
+4. **Install dependencies:**
+   
    ```bash
    npm install
    ```
-4. **Start the development server:**
+6. **Start the development server:**
+   
    ```bash
    npm run dev
    ```
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+8. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Tech Stack
 
