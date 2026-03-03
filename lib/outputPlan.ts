@@ -46,5 +46,6 @@ function settingsSignature(settings: HandoutSettings) {
     notesLineCount: settings.notesLineCount,
     notesLineSpacingMm: settings.notesLineSpacingMm,
     notesPosition: settings.notesPosition,
+    whiteoutEnabled: settings.whiteoutEnabled,
   });
 }

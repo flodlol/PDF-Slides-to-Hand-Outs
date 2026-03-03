@@ -125,6 +125,13 @@ export function ControlsPanel({ settings, onChange, onReset }: ControlsPanelProp
           />
           <span className="text-sm">Slide numbers on cards</span>
         </label>
+        <label className="flex items-center space-x-3 rounded-lg border border-border/70 px-3 py-2 col-span-2">
+          <Switch
+            checked={settings.whiteoutEnabled}
+            onCheckedChange={(value) => onChange({ whiteoutEnabled: Boolean(value) })}
+          />
+          <span className="text-sm">Hide repeated elements</span>
+        </label>
       </div>
 
       {onReset && (

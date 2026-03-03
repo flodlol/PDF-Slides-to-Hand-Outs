@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { SlideSettingsOverrideMap } from "@/lib/outputPlan";
 import { SlideOverridePanel } from "@/components/SlideOverridePanel";
+import { detectRepeatedRegions, WhiteoutMap } from "@/lib/detectRepeatedRegions";
 
 interface LoadedPdfMeta {
   name: string;
@@ -48,6 +49,8 @@ export default function HomePage() {
   const [currentOutputPage, setCurrentOutputPage] = useState(0);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [whiteoutRegions, setWhiteoutRegions] = useState<WhiteoutMap>({});
+  const [isDetecting, setIsDetecting] = useState(false);
   const previewZoom = 0.5;
   const presetUploadRef = useRef<HTMLInputElement | null>(null);
   const uploadTokenRef = useRef(0);
@@ -90,6 +93,30 @@ export default function HomePage() {
     if (!isHydrated) return;
     localStorage.setItem("phs-custom-templates", JSON.stringify(customTemplates));
   }, [customTemplates, isHydrated]);
+
+  // Detect repeated elements when toggle is on and PDF / selection changes
+  useEffect(() => {
+    if (!pdfDoc || !settings.whiteoutEnabled || selectedPages.length < 2) {
+      setWhiteoutRegions({});
+      return;
+    }
+    let cancelled = false;
+    setIsDetecting(true);
+    detectRepeatedRegions(pdfDoc, selectedPages)
+      .then((regions) => {
+        if (!cancelled) setWhiteoutRegions(regions);
+      })
+      .catch((err) => {
+        console.warn("Whiteout detection failed", err);
+        if (!cancelled) setWhiteoutRegions({});
+      })
+      .finally(() => {
+        if (!cancelled) setIsDetecting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfDoc, selectedPages, settings.whiteoutEnabled]);
 
   const layout = useMemo(() => buildLayoutPlan(settings), [settings]);
 
@@ -171,7 +198,7 @@ export default function HomePage() {
         throw new Error("No slides selected.");
       }
 
-      const output = await generateHandout(sourceBytes, settings, selectedPages, pageOverrides);
+      const output = await generateHandout(sourceBytes, settings, selectedPages, pageOverrides, whiteoutRegions);
       const arrayBuffer =
         output.byteOffset === 0 && output.byteLength === output.buffer.byteLength
           ? (output.buffer as ArrayBuffer)
@@ -192,7 +219,7 @@ export default function HomePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [pdfBytes, pdfDoc, settings, meta, pageOverrides, selectedPages]);
+  }, [pdfBytes, pdfDoc, settings, meta, pageOverrides, selectedPages, whiteoutRegions]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-muted/40">
@@ -417,6 +444,7 @@ export default function HomePage() {
                     onPageChange={setCurrentOutputPage}
                     zoom={previewZoom}
                     pageOverrides={pageOverrides}
+                    whiteoutRegions={whiteoutRegions}
                   />
                 )}
               </CardContent>

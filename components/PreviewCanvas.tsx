@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { buildLayoutPlan, mmToPx } from "@/lib/layoutEngine";
 import { buildOutputPlan, SlideSettingsOverrideMap } from "@/lib/outputPlan";
 import { getNotesLayout } from "@/lib/notesLayout";
+import { WhiteoutMap } from "@/lib/detectRepeatedRegions";
 
 interface PreviewCanvasProps {
   pdf: PDFDocumentProxy | null;
@@ -17,6 +18,7 @@ interface PreviewCanvasProps {
   onPageChange: (page: number) => void;
   zoom: number;
   pageOverrides: SlideSettingsOverrideMap;
+  whiteoutRegions: WhiteoutMap;
 }
 
 export function PreviewCanvas({
@@ -28,6 +30,7 @@ export function PreviewCanvas({
   onPageChange,
   zoom,
   pageOverrides,
+  whiteoutRegions,
 }: PreviewCanvasProps) {
   const canvasRefs = useRef<HTMLCanvasElement[]>([]);
   const cacheRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
@@ -123,6 +126,25 @@ export function PreviewCanvas({
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = "high";
           ctx.drawImage(sourceCanvas, x, y, renderWidth, renderHeight);
+
+          // Draw whiteout rectangles over repeated elements
+          const pageRegions = plan.settings.whiteoutEnabled ? whiteoutRegions[plan.pageIndices[i]] : undefined;
+          if (pageRegions && pageRegions.length > 0) {
+            ctx.save();
+            for (const region of pageRegions) {
+              const rx = x + region.xPct * renderWidth;
+              const ry = y + region.yPct * renderHeight;
+              const rw = region.widthPct * renderWidth;
+              const rh = region.heightPct * renderHeight;
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(rx, ry, rw, rh);
+              ctx.strokeStyle = "#ffffff";
+              ctx.lineWidth = 1;
+              ctx.strokeRect(rx, ry, rw, rh);
+            }
+            ctx.restore();
+          }
+
           if (plan.settings.showFrame) {
             ctx.strokeStyle = "rgba(60, 70, 90, 0.7)";
             ctx.lineWidth = Math.max(1, 1.2 * zoom);
@@ -195,7 +217,7 @@ export function PreviewCanvas({
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [pdf, settings, pageCount, zoom, outputPageCount, effectivePages, outputPlan, layoutCache, pageOverrides]);
+  }, [pdf, settings, pageCount, zoom, outputPageCount, effectivePages, outputPlan, layoutCache, pageOverrides, whiteoutRegions]);
 
   return (
     <div className="flex flex-col space-y-3 h-full">

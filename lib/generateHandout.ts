@@ -3,6 +3,7 @@ import { buildLayoutPlan, mmToPt } from "./layoutEngine";
 import { HandoutSettings } from "./types";
 import { buildOutputPlan, SlideSettingsOverrideMap } from "./outputPlan";
 import { getNotesLayout } from "./notesLayout";
+import { WhiteoutMap } from "./detectRepeatedRegions";
 
 /**
  * Generate an N-up handout PDF based on incoming PDF bytes and layout settings.
@@ -11,7 +12,8 @@ export async function generateHandout(
   inputPdfBytes: Uint8Array,
   settings: HandoutSettings,
   selectedPages?: number[], // zero-based page indices to keep; defaults to all
-  overrides: SlideSettingsOverrideMap = {}
+  overrides: SlideSettingsOverrideMap = {},
+  whiteoutRegions: WhiteoutMap = {}
 ): Promise<Uint8Array> {
   if (!inputPdfBytes || inputPdfBytes.length < 4) {
     throw new Error("Input PDF bytes are empty.");
@@ -70,6 +72,27 @@ export async function generateHandout(
         xScale: renderScale,
         yScale: renderScale,
       });
+
+      // Draw white rectangles over repeated elements
+      const pageRegions = plan.settings.whiteoutEnabled ? whiteoutRegions[inputIndex] : undefined;
+      if (pageRegions && pageRegions.length > 0) {
+        for (const region of pageRegions) {
+          const rx = x + region.xPct * renderWidth;
+          // PDF-lib y is bottom-up, and embedded page origin is at (x, y) bottom-left
+          const ry = y + (1 - region.yPct - region.heightPct) * renderHeight;
+          const rw = region.widthPct * renderWidth;
+          const rh = region.heightPct * renderHeight;
+          page.drawRectangle({
+            x: rx,
+            y: ry,
+            width: rw,
+            height: rh,
+            color: rgb(1, 1, 1),
+            borderColor: rgb(1, 1, 1),
+            borderWidth: 0.5,
+          });
+        }
+      }
 
       if (plan.settings.showFrame) {
         page.drawRectangle({

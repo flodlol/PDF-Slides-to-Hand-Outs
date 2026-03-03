@@ -13,6 +13,7 @@ export const defaultSettings: HandoutSettings = {
   notesLineCount: 6,
   notesLineSpacingMm: 6,
   notesPosition: "bottom",
+  whiteoutEnabled: false,
 };
 
 export const templates: TemplatePreset[] = [
@@ -33,6 +34,7 @@ export const templates: TemplatePreset[] = [
       notesLineCount: 6,
       notesLineSpacingMm: 6,
       notesPosition: "bottom",
+      whiteoutEnabled: false,
     },
   },
   {
@@ -52,6 +54,7 @@ export const templates: TemplatePreset[] = [
       notesLineCount: 6,
       notesLineSpacingMm: 6,
       notesPosition: "bottom",
+      whiteoutEnabled: false,
     },
   },
   {
@@ -71,6 +74,7 @@ export const templates: TemplatePreset[] = [
       notesLineCount: 6,
       notesLineSpacingMm: 6,
       notesPosition: "bottom",
+      whiteoutEnabled: false,
     },
   },
   {
@@ -90,6 +94,7 @@ export const templates: TemplatePreset[] = [
       notesLineCount: 6,
       notesLineSpacingMm: 6,
       notesPosition: "bottom",
+      whiteoutEnabled: false,
     },
   },
   {
@@ -109,6 +114,7 @@ export const templates: TemplatePreset[] = [
       notesLineCount: 6,
       notesLineSpacingMm: 6,
       notesPosition: "bottom",
+      whiteoutEnabled: false,
     },
   },
 ];

@@ -15,6 +15,7 @@ export interface HandoutSettings {
   notesLineCount: number;
   notesLineSpacingMm: number;
   notesPosition: "bottom" | "left" | "right";
+  whiteoutEnabled: boolean;
 }
 
 export interface TemplatePreset {
